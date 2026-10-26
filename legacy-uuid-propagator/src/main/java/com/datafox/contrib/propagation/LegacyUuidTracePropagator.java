@@ -1,5 +1,4 @@
 /*
- * Copyright The OpenTelemetry Authors
  * Copyright The DataFox Authors
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -24,8 +23,8 @@ import javax.annotation.Nullable;
 /**
  * Extracts legacy trace context from the X-CHJ-TraceId and X-CHJ-SpanId headers.
  *
- * <p>Accepts 32-character hexadecimal trace IDs and canonical 36-character UUIDs. If the span ID
- * is absent or invalid, it uses the first 16 hexadecimal characters of the trace ID as a synthetic
+ * <p>Accepts 32-character hexadecimal trace IDs and canonical 36-character UUIDs. If the span ID is
+ * absent or invalid, it uses the first 16 hexadecimal characters of the trace ID as a synthetic
  * remote parent ID, preserving the legacy protocol behavior. It does not inject headers.
  */
 public final class LegacyUuidTracePropagator implements TextMapPropagator {

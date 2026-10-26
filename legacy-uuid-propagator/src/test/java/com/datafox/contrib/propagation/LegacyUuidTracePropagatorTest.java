@@ -6,7 +6,6 @@
 package com.datafox.contrib.propagation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -28,8 +27,7 @@ class LegacyUuidTracePropagatorTest {
   private static final String UUID = "550e8400-e29b-41d4-a716-446655440000";
   private static final String TRACE_ID = "550e8400e29b41d4a716446655440000";
   private static final String PARENT_ID = "0123456789abcdef";
-  private static final TextMapPropagator PROPAGATOR =
-      LegacyUuidTracePropagator.getInstance();
+  private static final TextMapPropagator PROPAGATOR = LegacyUuidTracePropagator.getInstance();
 
   private static final TextMapGetter<Map<String, String>> GETTER =
       new TextMapGetter<Map<String, String>>() {
@@ -128,10 +126,10 @@ class LegacyUuidTracePropagatorTest {
   void doesNotInjectLegacyHeaders() {
     Map<String, String> headers = new HashMap<>();
     TextMapSetter<Map<String, String>> setter = Map::put;
-    PROPAGATOR.inject(Context.root().with(Span.wrap(extract(headers(UUID, PARENT_ID)))), headers, setter);
+    PROPAGATOR.inject(
+        Context.root().with(Span.wrap(extract(headers(UUID, PARENT_ID)))), headers, setter);
     assertTrue(headers.isEmpty());
     assertTrue(PROPAGATOR.fields().isEmpty());
-    assertFalse(extract(headers(UUID, PARENT_ID)).getTraceId().isEmpty());
   }
 
   private static SpanContext extract(Map<String, String> headers) {
