@@ -66,7 +66,8 @@ class LegacyUuidTracePropagatorTest {
         Span.fromContext(configured.extract(Context.root(), carrier, GETTER))
             .getSpanContext()
             .getTraceId());
-    assertSame(Context.root(), configured.extract(Context.root(), headers(UUID, PARENT_ID), GETTER));
+    assertSame(
+        Context.root(), configured.extract(Context.root(), headers(UUID, PARENT_ID), GETTER));
   }
 
   @Test
