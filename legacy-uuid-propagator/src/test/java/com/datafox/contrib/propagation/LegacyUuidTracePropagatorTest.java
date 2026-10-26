@@ -28,7 +28,10 @@ class LegacyUuidTracePropagatorTest {
   private static final String UUID = "550e8400-e29b-41d4-a716-446655440000";
   private static final String TRACE_ID = "550e8400e29b41d4a716446655440000";
   private static final String PARENT_ID = "0123456789abcdef";
-  private static final TextMapPropagator PROPAGATOR = LegacyUuidTracePropagator.getInstance();
+  private static final String TRACE_HEADER = "X-Legacy-TraceId";
+  private static final String SPAN_HEADER = "X-Legacy-SpanId";
+  private static final TextMapPropagator PROPAGATOR =
+      LegacyUuidTracePropagator.create(TRACE_HEADER, SPAN_HEADER);
 
   private static final TextMapGetter<Map<String, String>> GETTER =
       new TextMapGetter<Map<String, String>>() {
@@ -42,6 +45,29 @@ class LegacyUuidTracePropagatorTest {
           return carrier.get(key);
         }
       };
+
+  @Test
+  void rejectsMissingHeaderConfiguration() {
+    org.junit.jupiter.api.Assertions.assertThrows(
+        IllegalArgumentException.class, () -> LegacyUuidTracePropagator.create(null, SPAN_HEADER));
+    org.junit.jupiter.api.Assertions.assertThrows(
+        IllegalArgumentException.class, () -> LegacyUuidTracePropagator.create(TRACE_HEADER, " "));
+  }
+
+  @Test
+  void extractsUsingDifferentConfiguredHeaders() {
+    TextMapPropagator configured =
+        LegacyUuidTracePropagator.create("trace-identifier", "parent-identifier");
+    Map<String, String> carrier = new HashMap<>();
+    carrier.put("trace-identifier", UUID);
+    carrier.put("parent-identifier", PARENT_ID);
+    assertEquals(
+        TRACE_ID,
+        Span.fromContext(configured.extract(Context.root(), carrier, GETTER))
+            .getSpanContext()
+            .getTraceId());
+    assertSame(Context.root(), configured.extract(Context.root(), headers(UUID, PARENT_ID), GETTER));
+  }
 
   @Test
   void extractsCanonicalUuidAndParentSpanId() {
@@ -139,9 +165,9 @@ class LegacyUuidTracePropagatorTest {
 
   private static Map<String, String> headers(String traceId, String spanId) {
     Map<String, String> result = new HashMap<>();
-    result.put("X-CHJ-TraceId", traceId);
+    result.put(TRACE_HEADER, traceId);
     if (spanId != null) {
-      result.put("X-CHJ-SpanId", spanId);
+      result.put(SPAN_HEADER, spanId);
     }
     return result;
   }

@@ -21,7 +21,7 @@ import java.util.Locale;
 import javax.annotation.Nullable;
 
 /**
- * Extracts legacy trace context from the X-CHJ-TraceId and X-CHJ-SpanId headers.
+ * Extracts legacy trace context from configurable trace ID and span ID headers.
  *
  * <p>Accepts 32-character hexadecimal trace IDs and canonical 36-character UUIDs. If the span ID is
  * absent or invalid, it uses the first 16 hexadecimal characters of the trace ID as a synthetic
@@ -29,16 +29,23 @@ import javax.annotation.Nullable;
  */
 public final class LegacyUuidTracePropagator implements TextMapPropagator {
 
-  private static final String TRACE_ID_HEADER = "X-CHJ-TraceId";
-  private static final String SPAN_ID_HEADER = "X-CHJ-SpanId";
+  private final String traceIdHeader;
+  private final String spanIdHeader;
 
-  private static final LegacyUuidTracePropagator INSTANCE = new LegacyUuidTracePropagator();
+  private LegacyUuidTracePropagator(String traceIdHeader, String spanIdHeader) {
+    this.traceIdHeader = traceIdHeader;
+    this.spanIdHeader = spanIdHeader;
+  }
 
-  private LegacyUuidTracePropagator() {}
-
-  /** Returns the singleton propagator instance. */
-  public static LegacyUuidTracePropagator getInstance() {
-    return INSTANCE;
+  /** Creates a propagator with the specified legacy header names. */
+  public static LegacyUuidTracePropagator create(String traceIdHeader, String spanIdHeader) {
+    if (traceIdHeader == null
+        || traceIdHeader.trim().isEmpty()
+        || spanIdHeader == null
+        || spanIdHeader.trim().isEmpty()) {
+      throw new IllegalArgumentException("Legacy trace and span ID header names must be set");
+    }
+    return new LegacyUuidTracePropagator(traceIdHeader, spanIdHeader);
   }
 
   @Override
@@ -56,12 +63,12 @@ public final class LegacyUuidTracePropagator implements TextMapPropagator {
       return context;
     }
 
-    String traceId = normalizeTraceId(getter.get(carrier, TRACE_ID_HEADER));
+    String traceId = normalizeTraceId(getter.get(carrier, traceIdHeader));
     if (traceId == null) {
       return context;
     }
 
-    String spanId = getter.get(carrier, SPAN_ID_HEADER);
+    String spanId = getter.get(carrier, spanIdHeader);
     if (spanId != null) {
       spanId = spanId.toLowerCase(Locale.ROOT);
     }

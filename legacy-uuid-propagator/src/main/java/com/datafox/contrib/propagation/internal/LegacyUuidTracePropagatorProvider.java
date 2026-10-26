@@ -15,7 +15,9 @@ public final class LegacyUuidTracePropagatorProvider implements ConfigurableProp
 
   @Override
   public TextMapPropagator getPropagator(ConfigProperties config) {
-    return LegacyUuidTracePropagator.getInstance();
+    return LegacyUuidTracePropagator.create(
+        config.getString("datafox.propagation.legacy.trace-id-header"),
+        config.getString("datafox.propagation.legacy.span-id-header"));
   }
 
   @Override
