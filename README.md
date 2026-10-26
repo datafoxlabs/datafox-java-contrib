@@ -10,6 +10,7 @@
 datafox-java-contrib/
 ├── buildSrc/                 # 预编译 Gradle 约定插件
 ├── dependencyManagement/     # Java Platform：集中管理依赖版本
+├── testing/conventions/      # 构建约定和 BOM 的烟雾测试（不发布）
 ├── buildscripts/             # Spotless 许可证模板
 ├── .github/workflows/        # 构建、格式检查和 Wrapper 验证
 ├── build.gradle.kts          # 项目构建入口
@@ -58,7 +59,7 @@ dependencies {
 ./gradlew spotlessCheck
 ```
 
-**工程初始化说明**：当前使用的 GitHub 文件写入接口不接受上游 Gradle Wrapper 的二进制 JAR，因此仓库初始化时先保留上游 Wrapper 脚本、版本和 SHA-256 配置；`gradle/wrapper/gradle-wrapper.jar` 需要通过官方 Gradle `gradle wrapper --gradle-version 9.8.1` 生成后提交。该步骤完成前可用已安装的 Gradle 9.8.1 执行 `gradle build`。CI 使用明确指定版本的 Gradle。
+Gradle Wrapper 已通过官方 Gradle 9.8.1 生成，包含 `gradle-wrapper.jar` 和校验和配置。CI 执行 `spotlessCheck`、`build`，并独立校验 Wrapper。
 
 ## 工程原则
 

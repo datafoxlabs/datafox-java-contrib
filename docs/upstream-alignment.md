@@ -33,7 +33,7 @@
 
 **不继承上游发布凭据和缓存服务。** Nexus / POM 指向 DataFox；Develocity Build Scan 显式 opt-in，避免向 OpenTelemetry 的远程缓存和组织项目写入数据。
 
-**暂不发布空 Artifact。** 初始化时只包含 `:dependencyManagement` 子项目；等有真实可复用组件，再将业务模块纳入 `settings.gradle.kts` 并启用发布约定。
+**暂不发布空 Artifact。** 初始化时只有 `:dependencyManagement` 和不发布的 `:testing:conventions` 烟雾测试模块；等有真实可复用组件，再将业务模块纳入 `settings.gradle.kts` 并启用发布约定。
 
 **API Diff 首次稳定版本前不可自动验证。** 从 `0.1.0` 开始定义基线；需在首次真实发布后更新基线版本及 API Diff 记录，避免把不存在的 Maven 发布版本视为现成历史记录。
 
@@ -47,22 +47,14 @@
 
 源参考：[DataFox Java Agent](https://github.com/datafoxlabs/datafox-java-agent)。
 
-## 4. Gradle Wrapper JAR 说明
+## 4. Gradle Wrapper
 
-GitHub 连接当前只能读取 UTF-8 代码文件，不能把上游二进制 `gradle-wrapper.jar` 导入此仓库；初始提交包括 `gradlew`、`gradlew.bat` 和 `gradle-wrapper.properties`，缺少 JAR。它们在 JAR 提交前无法独立启动 Gradle。
+Gradle Wrapper 脚本、Gradle 9.8.1 发行包 SHA-256 配置以及官方生成的 `gradle-wrapper.jar` 均已提交。JAR 通过 GitHub Actions 在 Gradle 9.8.1 环境生成，生成提交：[25d145e](https://github.com/datafoxlabs/datafox-java-contrib/commit/25d145e86ba8daf19535afb5b72480a36f924c4d)。
 
-使用 **Gradle 9.8.1** 运行下面命令，可生成官方 Wrapper：
-
-```sh
-gradle wrapper --gradle-version 9.8.1 --distribution-type bin
-```
-
-随后提交 `gradle/wrapper/gradle-wrapper.jar`。仓库中还提供 `Generate Gradle Wrapper JAR` 工作流（可手动触发），负责生成并提交官方 Wrapper JAR。工作流的写入权限受 GitHub Organization 政策约束。
-
-CI 的正常构建流程使用预装的 Gradle 9.8.1 生成 Wrapper 后再执行 `spotlessCheck` 和 `build`，以便在初始阶段检测构建脚本的有效性。
+CI 的独立 Wrapper 校验工作流使用 OpenTelemetry 上游相同的 `gradle/actions/wrapper-validation` 机制，正常构建不再临时生成 Wrapper。
 
 ## 5. 验证状态
 
 - 已静态核对关键构建文件与上游主分支结构和插件 ID 的映射。
-- 未在当前执行环境运行 Gradle：容器未安装 Gradle 且无法访问 Gradle Maven/Plugin 仓库。
-- GitHub Actions 构建结果以实际 Run 为准；不能以文件已提交推断编译通过。
+- [GitHub Actions Build #40254900592](https://github.com/datafoxlabs/datafox-java-contrib/actions/runs/40254900592)：Gradle Wrapper 生成、校验和、Spotless 和基础 Build 均通过。
+- 新增 `:testing:conventions` 后应以其 CI 运行结果确认 Java 编译、OTel BOM 和 JUnit 配置；当前执行环境无法直接联网运行 Gradle。

@@ -2,7 +2,8 @@ name: Build
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
   workflow_dispatch:
 
@@ -13,20 +14,17 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: temurin
           java-version: '21'
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
         with:
-          gradle-version: '9.8.1'
-      # Until wrapper JAR is added, bootstrap from the verified upstream distribution.
-      - name: Generate Gradle Wrapper
-        run: gradle wrapper --gradle-version 9.8.1 --distribution-type bin
-      - name: Verify Gradle Wrapper distribution checksum
-        run: grep -F 'distributionSha256Sum=dce76f55f8e251a3a1f130eb120f30b3d271de2b76c9b0729d316b5a1b6dc01f' gradle/wrapper/gradle-wrapper.properties
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
       - name: Spotless
-        run: bash ./gradlew spotlessCheck
-      - name: Build
-        run: bash ./gradlew build
+        run: ./gradlew spotlessCheck
+      - name: Build and test
+        run: ./gradlew build
