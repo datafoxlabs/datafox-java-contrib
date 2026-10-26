@@ -1,6 +1,8 @@
 name: Generate Gradle Wrapper JAR
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -19,7 +21,12 @@ jobs:
         with:
           gradle-version: '9.8.1'
       - name: Generate official wrapper
-        run: gradle wrapper --gradle-version 9.8.1 --distribution-type bin
+        run: |
+          if git ls-files --error-unmatch gradle/wrapper/gradle-wrapper.jar >/dev/null 2>&1; then
+            echo "Wrapper JAR is already tracked."
+            exit 0
+          fi
+          gradle wrapper --gradle-version 9.8.1 --distribution-type bin
       - name: Commit generated wrapper JAR
         run: |
           git config user.name "github-actions[bot]"
