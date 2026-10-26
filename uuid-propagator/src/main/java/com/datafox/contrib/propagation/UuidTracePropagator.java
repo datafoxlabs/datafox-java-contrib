@@ -25,7 +25,8 @@ import javax.annotation.Nullable;
  *
  * <p>Accepts 32-character hexadecimal trace IDs and canonical 36-character UUIDs. If the span ID is
  * absent or invalid, it uses the first 16 hexadecimal characters of the trace ID as a synthetic
- * remote parent ID, preserving compatibility with earlier trace propagation behavior. It does not inject headers.
+ * remote parent ID, preserving compatibility with earlier trace propagation behavior. It does not
+ * inject headers.
  */
 public final class UuidTracePropagator implements TextMapPropagator {
 
