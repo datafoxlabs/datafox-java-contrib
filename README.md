@@ -10,7 +10,8 @@
 datafox-java-contrib/
 ├── buildSrc/                 # 预编译 Gradle 约定插件
 ├── dependencyManagement/     # Java Platform：集中管理依赖版本
-├── uuid-propagator/    # UUID Trace Context 兼容
+├── uuid-propagator/       # UUID Trace Context 兼容
+├── kafka-exporter/        # Java 8 兼容的 Kafka OTLP Span Exporter
 ├── testing/conventions/      # 构建约定和 BOM 的烟雾测试（不发布）
 ├── buildscripts/             # Spotless 许可证模板
 ├── .github/workflows/        # 构建、格式检查和 Wrapper 验证
@@ -54,6 +55,8 @@ dependencies {
 ## 已实现的组件
 
 - [uuid-propagator](uuid-propagator/README.md)：通过可配置 Header 读取 UUID Trace ID 和父 Span ID，创建远程父 Context。通过 `datafox-uuid` 注册 SDK SPI；尚未纳入 DataFox Java Agent 打包。
+
+- [kafka-exporter](kafka-exporter/README.md)：Java 8 兼容的 Kafka SpanExporter，以 OTLP Protobuf 二进制格式写入 Kafka；复用上游序列化机制，无额外对象池。暂未纳入 DataFox Java Agent 打包。
 
 ## 本地构建
 

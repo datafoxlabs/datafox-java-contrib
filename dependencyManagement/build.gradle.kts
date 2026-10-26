@@ -56,9 +56,9 @@ dependencies {
     api("org.bouncycastle:bcprov-jdk18on:1.86")
     api("org.junit-pioneer:junit-pioneer:1.9.1")
     api("org.skyscreamer:jsonassert:1.5.3")
-    api("org.apache.kafka:kafka-clients:4.4.0")
-    // transitive deps of kafka-clients, pinned for CVE fixes (see kafka-exporter/build.gradle.kts)
-    // remove once kafka-clients depends on fixed versions
+    // Kafka 3.9.x is the last client line supporting Java 8; 3.9.2 includes security fixes.
+    api("org.apache.kafka:kafka-clients:3.9.2")
+    // Compression dependencies pinned to patched versions where applicable.
     api("at.yawk.lz4:lz4-java:1.12.0")
     api("com.github.luben:zstd-jni:1.5.7-24")
     api("org.testcontainers:testcontainers-kafka:2.0.5")

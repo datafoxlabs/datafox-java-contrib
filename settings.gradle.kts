@@ -37,3 +37,4 @@ rootProject.name = "datafox-java-contrib"
 include(":dependencyManagement")
 include(":testing:conventions")
 include(":uuid-propagator")
+include(":kafka-exporter")
