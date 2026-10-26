@@ -46,5 +46,7 @@ jobs:
             echo "Wrapper JAR was committed by another build."
             exit 0
           fi
+          # Gradle may rewrite the checked-in scripts/properties. Only the JAR belongs in this commit.
+          git restore -- gradlew gradlew.bat gradle/wrapper/gradle-wrapper.properties
           git rebase origin/main
           git push origin HEAD:main
