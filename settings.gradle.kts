@@ -36,3 +36,5 @@ rootProject.name = "datafox-java-contrib"
 
 include(":dependencyManagement")
 include(":testing:conventions")
+
+include(":legacy-uuid-propagator")

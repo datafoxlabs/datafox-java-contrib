@@ -10,6 +10,7 @@
 datafox-java-contrib/
 ├── buildSrc/                 # 预编译 Gradle 约定插件
 ├── dependencyManagement/     # Java Platform：集中管理依赖版本
+├── legacy-uuid-propagator/    # 历史 UUID Trace Context 兼容
 ├── testing/conventions/      # 构建约定和 BOM 的烟雾测试（不发布）
 ├── buildscripts/             # Spotless 许可证模板
 ├── .github/workflows/        # 构建、格式检查和 Wrapper 验证
@@ -19,7 +20,7 @@ datafox-java-contrib/
 └── gradle/                   # Gradle Wrapper 配置
 ```
 
-与上游一致，**业务组件作为独立 Gradle 子项目维护**，各模块通过约定插件获得统一的 Java toolchain、静态检查、依赖约束、测试、源代码包和发布元数据。初始化阶段不创建无实际能力的模块。
+与上游一致，**业务组件作为独立 Gradle 子项目维护**，各模块通过约定插件获得统一的 Java toolchain、静态检查、依赖约束、测试、源代码包和发布元数据。目前包含一个历史 Trace Context 兼容组件，其他能力按实际需求新增独立模块。
 
 ## 版本与约定
 
@@ -49,6 +50,10 @@ dependencies {
   api("io.opentelemetry:opentelemetry-sdk-trace")
 }
 ```
+
+## 已实现的组件
+
+- [legacy-uuid-propagator](legacy-uuid-propagator/README.md)：从历史 `X-CHJ-TraceId` / `X-CHJ-SpanId` HTTP Header 中提取 OpenTelemetry 远程父上下文，支持 UUID 与无连字符的 Trace ID。通过 `datafox-legacy` 进行 SDK 自动配置注册。此模块尚未接入 DataFox Java Agent 的打包流程。
 
 ## 本地构建
 
