@@ -57,4 +57,6 @@ CI 的独立 Wrapper 校验工作流使用 OpenTelemetry 上游相同的 `gradle
 
 - 已静态核对关键构建文件与上游主分支结构和插件 ID 的映射。
 - [GitHub Actions Build #40254900592](https://github.com/datafoxlabs/datafox-java-contrib/actions/runs/40254900592)：Gradle Wrapper 生成、校验和、Spotless 和基础 Build 均通过。
-- 新增 `:testing:conventions` 后应以其 CI 运行结果确认 Java 编译、OTel BOM 和 JUnit 配置；当前执行环境无法直接联网运行 Gradle。
+- [GitHub Actions Build #40255324001](https://github.com/datafoxlabs/datafox-java-contrib/actions/runs/40255324001)：`:testing:conventions` 的 Java / Test 编译、Javadoc、JUnit 测试及 Spotless 全部通过。
+- [Gradle Wrapper Validation #40255324000](https://github.com/datafoxlabs/datafox-java-contrib/actions/runs/40255324000)：官方 Wrapper 校验通过。
+- 当前本地执行容器无法联网运行 Gradle，以上验证由 GitHub Actions 执行。
