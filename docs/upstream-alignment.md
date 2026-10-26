@@ -1,7 +1,7 @@
 # 与 OpenTelemetry Java Contrib 的工程对齐
 
-> 参考仓库：[opentelemetry-java-contrib](https://github.com/open-telemetry/opentelemetry-java-contrib)  
-> 参考提交：[f2e17e8](https://github.com/open-telemetry/opentelemetry-java-contrib/commit/f2e17e8f336b2f7ddefb35ffb8b31ee537b32bce)（2026-10-26 读取）  
+> 参考仓库：[opentelemetry-java-contrib](https://github.com/open-telemetry/opentelemetry-java-contrib)
+> 参考提交：[f2e17e8](https://github.com/open-telemetry/opentelemetry-java-contrib/commit/f2e17e8f336b2f7ddefb35ffb8b31ee537b32bce)（2026-10-26 读取）
 > 目标仓库：`datafoxlabs/datafox-java-contrib`
 
 ## 1. 哪些内容进行了高保真移植？

@@ -5,6 +5,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+concurrency:
+  group: datafox-gradle-wrapper-bootstrap
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
@@ -37,4 +41,10 @@ jobs:
             exit 0
           fi
           git commit -m "build: add Gradle 9.8.1 wrapper JAR"
+          git fetch origin main
+          if git cat-file -e origin/main:gradle/wrapper/gradle-wrapper.jar 2>/dev/null; then
+            echo "Wrapper JAR was committed by another build."
+            exit 0
+          fi
+          git rebase origin/main
           git push origin HEAD:main
