@@ -83,6 +83,5 @@ jobs:
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
           GPG_PASSWORD: ${{ secrets.GPG_PASSWORD }}
         run: |
-          ./gradlew :kafka-exporter:publishToSonatype :uuid-propagator:publishToSonatype \
-            closeAndReleaseSonatypeStagingRepository \
+          ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository \
             -PreleaseVersion="${{ steps.release.outputs.version }}" --no-daemon --stacktrace
