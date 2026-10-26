@@ -20,6 +20,7 @@ import io.opentelemetry.context.propagation.TextMapSetter;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 class LegacyUuidTracePropagatorTest {
@@ -32,7 +33,7 @@ class LegacyUuidTracePropagatorTest {
   private static final TextMapGetter<Map<String, String>> GETTER =
       new TextMapGetter<Map<String, String>>() {
         @Override
-        public Iterable<String> keys(Map<String, String> carrier) {
+        public Set<String> keys(Map<String, String> carrier) {
           return carrier.keySet();
         }
 
