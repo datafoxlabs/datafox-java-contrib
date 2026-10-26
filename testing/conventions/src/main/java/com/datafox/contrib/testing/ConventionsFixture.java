@@ -7,7 +7,7 @@ package com.datafox.contrib.testing;
 
 import io.opentelemetry.sdk.trace.SdkTracerProvider;
 
-/** Internal fixture used to verify the Java build conventions. */
+// Internal fixture used to verify the Java build conventions.
 public final class ConventionsFixture {
   private ConventionsFixture() {}
 

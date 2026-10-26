@@ -10,7 +10,7 @@ import io.opentelemetry.context.propagation.TextMapPropagator;
 import io.opentelemetry.sdk.autoconfigure.spi.ConfigProperties;
 import io.opentelemetry.sdk.autoconfigure.spi.ConfigurablePropagatorProvider;
 
-/** Registers the legacy trace propagator under the name {@code datafox-legacy}. */
+// Registers the legacy trace propagator under the name datafox-legacy.
 public final class LegacyUuidTracePropagatorProvider implements ConfigurablePropagatorProvider {
 
   @Override
