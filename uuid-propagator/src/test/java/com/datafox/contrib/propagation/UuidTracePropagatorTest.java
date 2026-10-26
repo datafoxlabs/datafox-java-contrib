@@ -7,6 +7,7 @@ package com.datafox.contrib.propagation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.opentelemetry.api.trace.Span;
@@ -48,9 +49,9 @@ class UuidTracePropagatorTest {
 
   @Test
   void rejectsMissingHeaderConfiguration() {
-    org.junit.jupiter.api.Assertions.assertThrows(
+    assertThrows(
         IllegalArgumentException.class, () -> UuidTracePropagator.create(null, SPAN_HEADER));
-    org.junit.jupiter.api.Assertions.assertThrows(
+    assertThrows(
         IllegalArgumentException.class, () -> UuidTracePropagator.create(TRACE_HEADER, " "));
   }
 
