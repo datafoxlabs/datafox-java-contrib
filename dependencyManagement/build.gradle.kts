@@ -63,7 +63,7 @@ dependencies {
     api("com.github.luben:zstd-jni:1.5.7-24")
     api("org.testcontainers:testcontainers-kafka:2.0.5")
     api("org.jctools:jctools-core:4.0.7")
-    api("tools.profiler:async-profiler:4.5")
+    api("tools.profiler:async-profiler:4.6")
     api("com.blogspot.mydailyjava:weak-lock-free:0.18")
     api("com.github.f4b6a3:uuid-creator:6.1.1")
   }
