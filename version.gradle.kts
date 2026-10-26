@@ -4,7 +4,7 @@ val apidiffBaselineVersion = "0.1.0"
 
 val releaseVersion = providers.gradleProperty("releaseVersion").orNull
 if (releaseVersion != null &&
-    !Regex("""[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.]+)?""").matches(releaseVersion)) {
+  !Regex("""[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.]+)?""").matches(releaseVersion)) {
   throw GradleException("Invalid releaseVersion: $releaseVersion")
 }
 
