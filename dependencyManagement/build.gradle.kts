@@ -14,7 +14,7 @@ dependencies {
   // under JvmTestSuite so they don't show up as runtime dependencies in license and vulnerability scans
   // (the constraints section below doesn't have this issue, and will only show up
   // as runtime dependencies if they are actually used as runtime dependencies)
-  api(platform("io.opentelemetry:opentelemetry-bom-alpha:1.66.0-alpha"))
+  api(platform("io.opentelemetry:opentelemetry-bom-alpha:1.67.0-alpha"))
   api(platform("io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom-alpha:${otelInstrumentationVersion}"))
   api(platform("com.fasterxml.jackson:jackson-bom:2.22.3"))
   api(platform("com.google.protobuf:protobuf-bom:4.36.2"))
