@@ -23,15 +23,15 @@ import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
-class LegacyUuidTracePropagatorTest {
+class UuidTracePropagatorTest {
 
   private static final String UUID = "550e8400-e29b-41d4-a716-446655440000";
   private static final String TRACE_ID = "550e8400e29b41d4a716446655440000";
   private static final String PARENT_ID = "0123456789abcdef";
-  private static final String TRACE_HEADER = "X-Legacy-TraceId";
-  private static final String SPAN_HEADER = "X-Legacy-SpanId";
+  private static final String TRACE_HEADER = "X-Request-Trace-Id";
+  private static final String SPAN_HEADER = "X-Request-Span-Id";
   private static final TextMapPropagator PROPAGATOR =
-      LegacyUuidTracePropagator.create(TRACE_HEADER, SPAN_HEADER);
+      UuidTracePropagator.create(TRACE_HEADER, SPAN_HEADER);
 
   private static final TextMapGetter<Map<String, String>> GETTER =
       new TextMapGetter<Map<String, String>>() {
@@ -49,15 +49,15 @@ class LegacyUuidTracePropagatorTest {
   @Test
   void rejectsMissingHeaderConfiguration() {
     org.junit.jupiter.api.Assertions.assertThrows(
-        IllegalArgumentException.class, () -> LegacyUuidTracePropagator.create(null, SPAN_HEADER));
+        IllegalArgumentException.class, () -> UuidTracePropagator.create(null, SPAN_HEADER));
     org.junit.jupiter.api.Assertions.assertThrows(
-        IllegalArgumentException.class, () -> LegacyUuidTracePropagator.create(TRACE_HEADER, " "));
+        IllegalArgumentException.class, () -> UuidTracePropagator.create(TRACE_HEADER, " "));
   }
 
   @Test
   void extractsUsingDifferentConfiguredHeaders() {
     TextMapPropagator configured =
-        LegacyUuidTracePropagator.create("trace-identifier", "parent-identifier");
+        UuidTracePropagator.create("trace-identifier", "parent-identifier");
     Map<String, String> carrier = new HashMap<>();
     carrier.put("trace-identifier", UUID);
     carrier.put("parent-identifier", PARENT_ID);
@@ -80,7 +80,7 @@ class LegacyUuidTracePropagatorTest {
   }
 
   @Test
-  void extractsLegacyUnhyphenatedTraceId() {
+  void extractsUnhyphenatedTraceId() {
     SpanContext parent = extract(headers(TRACE_ID, PARENT_ID));
     assertEquals(TRACE_ID, parent.getTraceId());
     assertEquals(PARENT_ID, parent.getSpanId());
@@ -95,13 +95,13 @@ class LegacyUuidTracePropagatorTest {
   }
 
   @Test
-  void usesHistoricalParentFallbackWhenMissing() {
+  void usesSyntheticParentWhenMissing() {
     SpanContext parent = extract(headers(UUID, null));
     assertEquals("550e8400e29b41d4", parent.getSpanId());
   }
 
   @Test
-  void usesHistoricalParentFallbackWhenInvalid() {
+  void usesSyntheticParentWhenInvalid() {
     SpanContext parent = extract(headers(UUID, "invalid"));
     assertEquals("550e8400e29b41d4", parent.getSpanId());
   }
@@ -145,13 +145,13 @@ class LegacyUuidTracePropagatorTest {
   }
 
   @Test
-  void ignoresAbsentLegacyHeader() {
+  void ignoresAbsentConfiguredHeader() {
     Context context = Context.root();
     assertSame(context, PROPAGATOR.extract(context, Collections.emptyMap(), GETTER));
   }
 
   @Test
-  void doesNotInjectLegacyHeaders() {
+  void doesNotInjectHeaders() {
     Map<String, String> headers = new HashMap<>();
     TextMapSetter<Map<String, String>> setter = Map::put;
     PROPAGATOR.inject(

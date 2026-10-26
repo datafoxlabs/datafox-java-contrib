@@ -3,7 +3,7 @@ plugins {
   id("datafox.publish-conventions")
 }
 
-description = "Legacy UUID trace context propagation for DataFox"
+description = "UUID trace context propagation for DataFox"
 
 datafoxJava {
   moduleName.set("com.datafox.contrib.propagation")

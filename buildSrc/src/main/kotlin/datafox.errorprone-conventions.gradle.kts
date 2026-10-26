@@ -36,6 +36,9 @@ tasks {
         // Doesn't currently use Var annotations.
         disable("Var") // "-Xep:Var:OFF"
 
+        // Markdown Javadoc comments require a newer language level; DataFox modules target Java 8.
+        disable("TraditionalJavadocToMarkdown")
+
         // ImmutableRefactoring suggests using com.google.errorprone.annotations.Immutable,
         // but currently uses javax.annotation.concurrent.Immutable
         disable("ImmutableRefactoring")

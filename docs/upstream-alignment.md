@@ -33,7 +33,7 @@
 
 **不继承上游发布凭据和缓存服务。** Nexus / POM 指向 DataFox；Develocity Build Scan 显式 opt-in，避免向 OpenTelemetry 的远程缓存和组织项目写入数据。
 
-**不发布空 Artifact。** 项目包含 `:dependencyManagement`、不发布的 `:testing:conventions` 烟雾测试模块，以及实现了历史 HTTP Trace Context 兼容能力的 `:legacy-uuid-propagator`。业务模块只有具备实际功能后才注册并发布。
+**不发布空 Artifact。** 项目包含 `:dependencyManagement`、不发布的 `:testing:conventions` 烟雾测试模块，以及实现了UUID Trace Context 兼容能力的 `:uuid-propagator`。业务模块只有具备实际功能后才注册并发布。
 
 **API Diff 首次稳定版本前不可自动验证。** 从 `0.1.0` 开始定义基线；需在首次真实发布后更新基线版本及 API Diff 记录，避免把不存在的 Maven 发布版本视为现成历史记录。
 

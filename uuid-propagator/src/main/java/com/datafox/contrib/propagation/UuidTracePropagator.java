@@ -21,36 +21,36 @@ import java.util.Locale;
 import javax.annotation.Nullable;
 
 /**
- * Extracts legacy trace context from configurable trace ID and span ID headers.
+ * Extracts UUID trace context from configurable trace ID and span ID headers.
  *
  * <p>Accepts 32-character hexadecimal trace IDs and canonical 36-character UUIDs. If the span ID is
  * absent or invalid, it uses the first 16 hexadecimal characters of the trace ID as a synthetic
- * remote parent ID, preserving the legacy protocol behavior. It does not inject headers.
+ * remote parent ID, preserving compatibility with earlier trace propagation behavior. It does not inject headers.
  */
-public final class LegacyUuidTracePropagator implements TextMapPropagator {
+public final class UuidTracePropagator implements TextMapPropagator {
 
   private final String traceIdHeader;
   private final String spanIdHeader;
 
-  private LegacyUuidTracePropagator(String traceIdHeader, String spanIdHeader) {
+  private UuidTracePropagator(String traceIdHeader, String spanIdHeader) {
     this.traceIdHeader = traceIdHeader;
     this.spanIdHeader = spanIdHeader;
   }
 
-  /** Creates a propagator with the specified legacy header names. */
-  public static LegacyUuidTracePropagator create(String traceIdHeader, String spanIdHeader) {
+  /** Creates a propagator with the specified trace and span ID header names. */
+  public static UuidTracePropagator create(String traceIdHeader, String spanIdHeader) {
     if (traceIdHeader == null
         || traceIdHeader.trim().isEmpty()
         || spanIdHeader == null
         || spanIdHeader.trim().isEmpty()) {
-      throw new IllegalArgumentException("Legacy trace and span ID header names must be set");
+      throw new IllegalArgumentException("Trace ID and span ID header names must be set");
     }
-    return new LegacyUuidTracePropagator(traceIdHeader, spanIdHeader);
+    return new UuidTracePropagator(traceIdHeader, spanIdHeader);
   }
 
   @Override
   public List<String> fields() {
-    // Legacy headers are extracted only; they are never injected.
+    // The configured headers are extracted only; they are never injected.
     return Collections.emptyList();
   }
 

@@ -5,23 +5,23 @@
 
 package com.datafox.contrib.propagation.internal;
 
-import com.datafox.contrib.propagation.LegacyUuidTracePropagator;
+import com.datafox.contrib.propagation.UuidTracePropagator;
 import io.opentelemetry.context.propagation.TextMapPropagator;
 import io.opentelemetry.sdk.autoconfigure.spi.ConfigProperties;
 import io.opentelemetry.sdk.autoconfigure.spi.ConfigurablePropagatorProvider;
 
-// Registers the legacy trace propagator under the name datafox-legacy.
-public final class LegacyUuidTracePropagatorProvider implements ConfigurablePropagatorProvider {
+/** Provides UUID-based propagation through the SDK's auto-configuration SPI. */
+public final class UuidTracePropagatorProvider implements ConfigurablePropagatorProvider {
 
   @Override
   public TextMapPropagator getPropagator(ConfigProperties config) {
-    return LegacyUuidTracePropagator.create(
-        config.getString("datafox.propagation.legacy.trace-id-header"),
-        config.getString("datafox.propagation.legacy.span-id-header"));
+    return UuidTracePropagator.create(
+        config.getString("datafox.propagation.uuid.trace-id-header"),
+        config.getString("datafox.propagation.uuid.span-id-header"));
   }
 
   @Override
   public String getName() {
-    return "datafox-legacy";
+    return "datafox-uuid";
   }
 }
