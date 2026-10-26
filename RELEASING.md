@@ -1,22 +1,59 @@
-# Publishing DataFox Java Contrib modules
+# Publishing DataFox Java Contrib
 
-项目沿用 OpenTelemetry Java Contrib 的 Maven Publish、Nexus Publishing 与 Signing 约定，但不复制上游发布流程或凭据。
+Contrib libraries are published before DataFox Java Agent. The release workflow is
+[Publish DataFox Java Contrib](.github/workflows/publish-maven.yml).
 
-当前版本由 `version.gradle.kts` 管理，默认为 `0.1.0-alpha-SNAPSHOT`。设置 `-Pdatafox.stable=true` 可切换到配置的稳定版本（当前为 `0.1.0-SNAPSHOT`，仍属 SNAPSHOT）。
+## Versioning
 
-## 前置条件
+Development builds remain `0.1.0-alpha-SNAPSHOT`. A release tag `v0.1.0-alpha.1`
+corresponds to Maven version `0.1.0-alpha.1`. The release version is supplied to
+Gradle as `-PreleaseVersion=0.1.0-alpha.1`, and does not alter the default
+development version.
 
-- 至少有一个实际组件应用 `datafox.publish-conventions`，并配置 `description` 和 `datafoxJava.moduleName`。
-- 组件与 DataFox Agent 使用兼容的 OpenTelemetry BOM。
-- 已完成构建、格式检查、测试；稳定版还应检查相对上一个已发布版本的 API Diff。
-- Maven Central 命名空间 `com.datafox` 的发布所有权与凭据已验证。
+The first release contains two independent Maven artifacts:
 
-## 发布所需环境变量
+- `com.datafox:datafox-kafka-exporter:0.1.0-alpha.1`
+- `com.datafox:datafox-uuid-propagator:0.1.0-alpha.1`
 
-`SONATYPE_USER`、`SONATYPE_KEY` 用于 Nexus 发布；CI 中提供 `GPG_PRIVATE_KEY` 和 `GPG_PASSWORD` 时启用 PGP 签名。不要提交这些值到仓库。
+Both have JAR, sources, Javadoc, POM and Gradle module metadata.
 
-发布前先使用 `./gradlew publishToMavenLocal` 检查生成的 Jar、sources、Javadoc 与 POM。当前仓库尚未启用自动发布工作流，所有远程发布均需专门审查及明确触发。
+## Release procedure
 
-## 发布边界
+1. Confirm `main` passes Gradle build, Spotless and Java 8 compatibility tests.
+2. Verify ownership of the Maven Central namespace `com.datafox` in Sonatype Central Portal.
+3. Configure the GitHub Actions environment `maven-central` with `SONATYPE_USER`,
+   `SONATYPE_KEY`, `GPG_PRIVATE_KEY`, and `GPG_PASSWORD`. Configure environment
+   protection / required reviewers to prevent accidental releases.
+4. Create an immutable annotated tag `v0.1.0-alpha.1` on the tested commit and push it.
+   A tag push runs validation and local Maven publication **without remote upload**.
+5. Once validation passes, manually run **Publish DataFox Java Contrib** against that
+   exact tag, with `publish_maven=true`. This publishes both signed artifacts and
+   attempts to close and release the Sonatype staging repository.
+6. Verify the two artifact URLs and signatures in Maven Central before changing the
+   Java Agent dependency from its pinned Git submodule to Maven coordinates.
 
-发布 Contrib Library 与打包 Java Agent 是独立生命周期：Contrib 构件经 Maven 版本依赖被 `datafox-java-agent` 引用；不要在 Contrib 发布流程中 Shadow 或重新构建上游 Java Agent。
+The workflow uses the Sonatype OSSRH Staging API compatibility endpoint already
+configured in `build.gradle.kts`. This requires an account whose Central Portal
+namespace and token are enabled for the compatibility service. If the namespace
+cannot use that service, migrate the publishing transport to the Central Portal
+Publishing API rather than repeatedly retrying an incompatible endpoint.
+
+## Local checks
+
+```sh
+./gradlew spotlessCheck build \
+  :kafka-exporter:publishToMavenLocal \
+  :uuid-propagator:publishToMavenLocal \
+  -PreleaseVersion=0.1.0-alpha.1
+```
+
+The workflow checks the generated POM for SNAPSHOT dependencies. It does not
+publish remotely on push or PR. Never store release credentials in Git.
+
+## Agent migration
+
+Until Maven Central contains the artifacts, the Agent continues to use the
+existing pinned Contrib Git submodule. After release, update `:custom` to
+`implementation("com.datafox:datafox-kafka-exporter:0.1.0-alpha.1")`,
+remove the Gradle included build and Git submodule, then run the complete Agent
+build, Shadow checks, Java 8 Kafka Broker smoke test, and JVM compatibility matrix.

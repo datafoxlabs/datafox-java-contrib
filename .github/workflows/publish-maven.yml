@@ -1,0 +1,88 @@
+name: Publish DataFox Java Contrib
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      publish_maven:
+        description: "Publish signed release artifacts to Maven Central"
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_maven && 'maven-central' || 'release-verification' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - name: Validate version tag
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF_TYPE" != "tag" ]]; then
+            echo "Select a release tag (vX.Y.Z or vX.Y.Z-alpha.N) when dispatching." >&2
+            exit 1
+          fi
+          VERSION="${GITHUB_REF_NAME#v}"
+          [[ "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]]
+          [[ "$VERSION" != *-SNAPSHOT ]]
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+      - name: Test and validate publication artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew spotlessCheck build \
+            :kafka-exporter:publishToMavenLocal \
+            :uuid-propagator:publishToMavenLocal \
+            -PreleaseVersion="${{ steps.release.outputs.version }}" --no-daemon
+          for module in kafka-exporter uuid-propagator; do
+            artifact="datafox-$module"
+            dir="$HOME/.m2/repository/com/datafox/$artifact/${{ steps.release.outputs.version }}"
+            test -s "$dir/$artifact-${{ steps.release.outputs.version }}.jar"
+            test -s "$dir/$artifact-${{ steps.release.outputs.version }}-sources.jar"
+            test -s "$dir/$artifact-${{ steps.release.outputs.version }}-javadoc.jar"
+            test -s "$dir/$artifact-${{ steps.release.outputs.version }}.pom"
+            if grep -q -- '-SNAPSHOT' "$dir/$artifact-${{ steps.release.outputs.version }}.pom"; then
+              echo "SNAPSHOT dependency in release POM: $artifact" >&2
+              exit 1
+            fi
+          done
+      - name: Require Maven Central credentials and signing key
+        if: github.event_name == 'workflow_dispatch' && inputs.publish_maven
+        env:
+          SONATYPE_USER: ${{ secrets.SONATYPE_USER }}
+          SONATYPE_KEY: ${{ secrets.SONATYPE_KEY }}
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSWORD: ${{ secrets.GPG_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$SONATYPE_USER"
+          test -n "$SONATYPE_KEY"
+          test -n "$GPG_PRIVATE_KEY"
+          test -n "$GPG_PASSWORD"
+      - name: Publish signed artifacts to Maven Central
+        if: github.event_name == 'workflow_dispatch' && inputs.publish_maven
+        env:
+          SONATYPE_USER: ${{ secrets.SONATYPE_USER }}
+          SONATYPE_KEY: ${{ secrets.SONATYPE_KEY }}
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSWORD: ${{ secrets.GPG_PASSWORD }}
+        run: |
+          ./gradlew :kafka-exporter:publishToSonatype :uuid-propagator:publishToSonatype \
+            closeAndReleaseSonatypeStagingRepository \
+            -PreleaseVersion="${{ steps.release.outputs.version }}" --no-daemon --stacktrace

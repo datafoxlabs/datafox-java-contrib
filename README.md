@@ -69,6 +69,10 @@ dependencies {
 
 Gradle Wrapper 已通过官方 Gradle 9.8.1 生成，包含 `gradle-wrapper.jar` 和校验和配置。CI 执行 `spotlessCheck`、`build`，并独立校验 Wrapper。
 
+## Maven 发布
+
+通过 [RELEASING.md](RELEASING.md) 中的 Tag + 手动批准工作流发布 Contrib 构件。首次计划版本为 `0.1.0-alpha.1`；远程发布成功前，Agent 继续使用固定提交的 Contrib 源码依赖。
+
 ## 工程原则
 
 1. 优先复用 OTel Java / Java Contrib 已有 API 与组件，不复制上游业务实现。
