@@ -1,0 +1,229 @@
+import com.datafox.gradle.DatafoxJavaExtension
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+
+plugins {
+  `java-library`
+  jacoco
+
+  id("datafox.errorprone-conventions")
+  id("datafox.spotless-conventions")
+  id("datafox.japicmp-conventions")
+  id("org.sonatype.gradle.plugins.scan")
+}
+
+val datafoxJava = extensions.create<DatafoxJavaExtension>("datafoxJava")
+
+group = "com.datafox"
+
+base.archivesName.set("datafox-${project.name}")
+
+// Version to use to compile code and run tests.
+val DEFAULT_JAVA_VERSION = JavaVersion.VERSION_21
+
+java {
+  toolchain {
+    languageVersion.set(
+        datafoxJava.minJavaVersionSupported.map { JavaLanguageVersion.of(Math.max(it.majorVersion.toInt(), DEFAULT_JAVA_VERSION.majorVersion.toInt())) }
+    )
+  }
+
+  withJavadocJar()
+  withSourcesJar()
+}
+
+tasks {
+  withType<JavaCompile>().configureEach {
+    with(options) {
+      release.set(datafoxJava.minJavaVersionSupported.map { it.majorVersion.toInt() })
+
+      if (name!="jmhCompileGeneratedClasses") {
+        compilerArgs.addAll(
+          listOf(
+            "-Xlint:all",
+            // We suppress the "try" warning because it disallows managing an auto-closeable with
+            // try-with-resources without referencing the auto-closeable within the try block.
+            "-Xlint:-try",
+            // We suppress the "processing" warning as suggested in
+            // https://groups.google.com/forum/#!topic/bazel-discuss/_R3A9TJSoPM
+            "-Xlint:-processing",
+            // We suppress the "options" warning because it prevents compilation on modern JDKs
+            "-Xlint:-options",
+            // We suppress the "deprecation" warning because --release 8 causes javac to warn on
+            // importing deprecated classes (fixed in JDK 9+, see https://bugs.openjdk.org/browse/JDK-8032211).
+            // We use a custom Error Prone check instead (OtelDeprecatedApiUsage).
+            "-Xlint:-deprecation",
+
+            // Fail build on any warning
+            "-Werror",
+          ),
+        )
+      }
+
+      encoding = "UTF-8"
+
+      if (name.contains("Test")) {
+        // serialVersionUI is basically guaranteed to be useless in tests
+        compilerArgs.add("-Xlint:-serial")
+        compilerArgs.add("-Xlint:-this-escape")
+      }
+    }
+  }
+
+  withType<Test>().configureEach {
+    useJUnitPlatform()
+
+    val maxTestRetries = gradle.startParameter.projectProperties["maxTestRetries"]?.toInt() ?: 0
+    develocity.testRetry {
+      // You can see tests that were retried by this mechanism in the collected test reports and build scans.
+      maxRetries.set(maxTestRetries)
+    }
+
+    testLogging {
+      exceptionFormat = TestExceptionFormat.FULL
+      showStandardStreams = true
+    }
+
+    configure<JacocoTaskExtension> {
+      // only care about code coverage for code in this repository
+      // (in particular avoiding netty classes which sometimes end up
+      // causing sporadic CI failures)
+      includes = listOf("com/datafox/**")
+    }
+  }
+
+  withType<Javadoc>().configureEach {
+    exclude("com/datafox/**/internal/**")
+
+    with(options as StandardJavadocDocletOptions) {
+      source = "8"
+      encoding = "UTF-8"
+      docEncoding = "UTF-8"
+      breakIterator(true)
+
+      addBooleanOption("html5", true)
+      addBooleanOption("Xdoclint:all,-missing", true)
+    }
+  }
+}
+
+// Add version information to published artifacts.
+plugins.withId("datafox.publish-conventions") {
+  tasks {
+    register("generateVersionResource") {
+      val moduleName = datafoxJava.moduleName
+      val propertiesDir = moduleName.map { layout.buildDirectory.file("generated/properties/${it.replace('.', '/')}") }
+      val projectVersion = project.version.toString()
+
+      inputs.property("project.version", projectVersion)
+      outputs.dir(propertiesDir)
+
+      doLast {
+        File(propertiesDir.get().get().asFile, "version.properties").writeText("datafox.version=${projectVersion}")
+      }
+    }
+  }
+
+  sourceSets {
+    main {
+      output.dir(layout.buildDirectory.dir("generated/properties"), "builtBy" to "generateVersionResource")
+    }
+  }
+}
+
+val dependencyManagement = configurations.create("dependencyManagement") {
+  isCanBeConsumed = false
+  isCanBeResolved = false
+}
+
+dependencies {
+  dependencyManagement(platform(project(":dependencyManagement")))
+  afterEvaluate {
+    configurations.configureEach {
+      if (isCanBeResolved && !isCanBeConsumed) {
+        extendsFrom(dependencyManagement)
+      }
+    }
+  }
+
+  compileOnly("com.google.code.findbugs:jsr305")
+  compileOnly("com.google.errorprone:error_prone_annotations")
+}
+
+val testcontainersBom = "org.testcontainers:testcontainers-bom:2.0.5"
+val armeriaBom = "com.linecorp.armeria:armeria-bom:1.42.0"
+
+testing {
+  suites.withType(JvmTestSuite::class).configureEach {
+    useJUnitJupiter("5.14.4")
+
+    dependencies {
+      implementation(project())
+
+      implementation(enforcedPlatform(testcontainersBom))
+      implementation(enforcedPlatform(armeriaBom))
+
+      compileOnly("com.google.auto.value:auto-value-annotations")
+      compileOnly("com.google.errorprone:error_prone_annotations")
+      compileOnly("com.google.code.findbugs:jsr305")
+
+      implementation("org.mockito:mockito-core")
+      implementation("org.mockito:mockito-junit-jupiter")
+      implementation("org.assertj:assertj-core")
+      implementation("org.awaitility:awaitility")
+      implementation("io.github.netmikey.logunit:logunit-jul")
+    }
+  }
+}
+
+tasks {
+  check {
+    dependsOn(testing.suites)
+  }
+}
+
+fun isJavaVersionAllowed(version: JavaVersion): Boolean {
+  if (datafoxJava.minJavaVersionSupported.get() > version) {
+    return false
+  }
+  if (datafoxJava.maxJavaVersionForTests.isPresent && datafoxJava.maxJavaVersionForTests.get().compareTo(version) < 0) {
+    return false
+  }
+  return true
+}
+
+afterEvaluate {
+  val testJavaVersion = gradle.startParameter.projectProperties["testJavaVersion"]?.let(JavaVersion::toVersion)
+  val useJ9 = gradle.startParameter.projectProperties["testJavaVM"]?.run { this=="openj9" }
+    ?: false
+  tasks.withType<Test>().configureEach {
+    if (testJavaVersion!=null) {
+      javaLauncher.set(
+        javaToolchains.launcherFor {
+          languageVersion.set(JavaLanguageVersion.of(testJavaVersion.majorVersion))
+          implementation.set(if (useJ9) JvmImplementation.J9 else JvmImplementation.VENDOR_SPECIFIC)
+        }
+      )
+      isEnabled = isEnabled && isJavaVersionAllowed(testJavaVersion)
+    } else {
+      // We default to testing with Java 11 for most tests, but some tests don't support it, where we change
+      // the default test task's version so commands like `./gradlew check` can test all projects regardless
+      // of Java version.
+      if (!isJavaVersionAllowed(DEFAULT_JAVA_VERSION) && datafoxJava.maxJavaVersionForTests.isPresent) {
+        javaLauncher.set(
+          javaToolchains.launcherFor {
+            languageVersion.set(JavaLanguageVersion.of(datafoxJava.maxJavaVersionForTests.get().majorVersion))
+          }
+        )
+      }
+    }
+  }
+}
+
+ossIndexAudit {
+  isExcludeCompileOnly = true
+  outputFormat = org.sonatype.gradle.plugins.scan.ossindex.OutputFormat.JSON_CYCLONE_DX_1_4
+
+  // Guide PAT authentication ignores this, but the scan plugin requires it.
+  username = "unused"
+  password = System.getenv("SONATYPE_GUIDE_PAT") ?: ""
+}

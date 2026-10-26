@@ -1,0 +1,121 @@
+import net.ltgt.gradle.errorprone.CheckSeverity
+import net.ltgt.gradle.errorprone.errorprone
+import net.ltgt.gradle.nullaway.nullaway
+
+plugins {
+  id("net.ltgt.errorprone")
+  id("net.ltgt.nullaway")
+}
+
+dependencies {
+  errorprone("com.google.errorprone:error_prone_core")
+  errorprone("com.uber.nullaway:nullaway")
+}
+
+val disableErrorProne = project.findProperty("disableErrorProne")?.toString()?.toBoolean() ?: false
+
+tasks {
+  withType<JavaCompile>().configureEach {
+    with(options) {
+      compilerArgs.add("-XDaddTypeAnnotationsToSymbol=true")
+      errorprone {
+        if (disableErrorProne) {
+          logger.warn("Errorprone has been disabled. Build may not result in a valid PR build.")
+          enabled.set(false)
+        }
+
+        disableWarningsInGeneratedCode.set(true)
+        allDisabledChecksAsWarnings.set(true)
+
+        // Ignore warnings for generated classes
+        excludedPaths.set(".*/build/generated/.*")
+
+        // Still Java 8 mostly
+        disable("Varifier")
+
+        // Doesn't currently use Var annotations.
+        disable("Var") // "-Xep:Var:OFF"
+
+        // ImmutableRefactoring suggests using com.google.errorprone.annotations.Immutable,
+        // but currently uses javax.annotation.concurrent.Immutable
+        disable("ImmutableRefactoring")
+
+        // AutoValueImmutableFields suggests returning Guava types from API methods
+        disable("AutoValueImmutableFields")
+        // Suggests using Guava types for fields but we don't use Guava
+        disable("ImmutableMemberCollection")
+
+        // TODO (trask) use animal sniffer
+        disable("Java8ApiChecker")
+
+        // apparently disabling android doesn't disable this
+        disable("StaticOrDefaultInterfaceMethod")
+
+        // We don't depend on Guava so use normal splitting
+        disable("StringSplitter")
+
+        // Prevents lazy initialization
+        disable("InitializeInline")
+
+        // Seems to trigger even when a deprecated method isn't called anywhere.
+        // We don't get much benefit from it anyways.
+        disable("InlineMeSuggester")
+
+        // We have nullaway so don't need errorprone nullable checks which have more false positives.
+        disable("FieldMissingNullable")
+        disable("ParameterMissingNullable")
+        disable("ReturnMissingNullable")
+        disable("VoidMissingNullable")
+
+        // allow UPPERCASE type parameter names
+        disable("TypeParameterNaming")
+
+        // YodaConditions may improve safety in some cases. The argument of increased
+        // cognitive load is dubious.
+        disable("YodaCondition")
+
+        // Requires adding compile dependency to JSpecify
+        disable("AddNullMarkedToClass")
+        disable("AddNullMarkedToPackageInfo")
+
+        disable("ReferenceEquality")
+
+        if (name.contains("Jmh") || name.contains("Test")) {
+          // Allow underscore in test-type method names
+          disable("MemberName")
+          disable("SuppressWarningsWithoutExplanation")
+        }
+
+        option("NullAway:CustomContractAnnotations", "io.opentelemetry.api.internal.Contract")
+      }
+
+      with(options) {
+        errorprone.nullaway {
+          annotatedPackages.add("com.datafox")
+          // Disable nullaway by default, we enable for main sources below.
+          severity.set(CheckSeverity.OFF)
+        }
+      }
+    }
+  }
+
+  // Enable nullaway on main sources.
+  named<JavaCompile>("compileJava") {
+    with(options) {
+      errorprone.nullaway {
+        severity.set(CheckSeverity.ERROR)
+      }
+    }
+  }
+}
+
+// Our conventions apply this project as a dependency in the errorprone configuration, which would cause
+// a circular dependency if trying to compile this project with that still there. So we filter this
+// project out.
+configurations {
+  named("errorprone") {
+    dependencies.removeIf {
+      it is ProjectDependency && it.name == project.name
+    }
+  }
+}
