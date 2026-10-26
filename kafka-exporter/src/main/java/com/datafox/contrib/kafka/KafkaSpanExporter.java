@@ -57,6 +57,7 @@ public final class KafkaSpanExporter implements SpanExporter {
   }
 
   @Override
+  @SuppressWarnings("FutureReturnValueIgnored") // Completion is tracked by the producer callback.
   public CompletableResultCode export(Collection<SpanData> spans) {
     if (shutdown.get()) {
       return CompletableResultCode.ofFailure();
