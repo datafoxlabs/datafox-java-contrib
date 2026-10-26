@@ -77,7 +77,8 @@ public final class KafkaSpanExporter implements SpanExporter {
             if (exception == null) {
               result.succeed();
             } else {
-              logger.log(Level.WARNING, "Failed to export spans to Kafka topic " + topic, exception);
+              logger.log(
+                  Level.WARNING, "Failed to export spans to Kafka topic " + topic, exception);
               result.fail();
             }
           });
