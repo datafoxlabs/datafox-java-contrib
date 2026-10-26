@@ -15,7 +15,7 @@ import io.opentelemetry.context.Context;
 import io.opentelemetry.context.propagation.TextMapGetter;
 import io.opentelemetry.context.propagation.TextMapPropagator;
 import io.opentelemetry.context.propagation.TextMapSetter;
-import java.util.Collection;
+import java.util.List;
 import java.util.Collections;
 import java.util.Locale;
 import javax.annotation.Nullable;
@@ -42,7 +42,7 @@ public final class LegacyUuidTracePropagator implements TextMapPropagator {
   }
 
   @Override
-  public Collection<String> fields() {
+  public List<String> fields() {
     // Legacy headers are extracted only; they are never injected.
     return Collections.emptyList();
   }
