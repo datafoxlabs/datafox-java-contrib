@@ -71,7 +71,7 @@ Gradle Wrapper 已通过官方 Gradle 9.8.1 生成，包含 `gradle-wrapper.jar`
 
 ## Maven 发布
 
-通过 [RELEASING.md](RELEASING.md) 中的 Tag + 手动批准工作流发布 Contrib 构件。首次计划版本为 `0.1.0-alpha.1`；远程发布成功前，Agent 继续使用固定提交的 Contrib 源码依赖。
+通过 [RELEASING.md](RELEASING.md) 使用 GitHub Packages 发布 Contrib 组件，无需 Sonatype 命名空间和域名。首次计划版本为 `0.1.0-alpha.1`。发布成功并验证后，再将 Agent 的 Git submodule 依赖切换为 Maven 坐标。
 
 ## 工程原则
 
